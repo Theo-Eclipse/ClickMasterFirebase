@@ -8,6 +8,8 @@ public class GolderRatioScaler : MonoBehaviour
 {
     [SerializeField] private CanvasScaler canvasScaler;
     // Start is called before the first frame update
+#if !UNITY_EDITOR
     void Start() => canvasScaler.scaleFactor = (Screen.dpi / 100.0f) * 0.618f;// 1.618 - Golden ration.   
+#endif
     private void Reset() => canvasScaler = GetComponent<CanvasScaler>();
 }
