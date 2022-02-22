@@ -57,3 +57,4 @@
 
 #FIREBASE
 *.so filter=lfs diff=lfs merge=lfs -text
+#*6395

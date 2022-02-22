@@ -6981,6 +6981,16 @@ MonoBehaviour:
   LoginScreen: {fileID: 1523390308}
   ClickerScreen: {fileID: 874034866}
   LoadingScreen: {fileID: 1571054797}
+  UserNameField: {fileID: 2079381580}
+  UserPasswordField: {fileID: 1161701880}
+  LoginButton: {fileID: 2080425667}
+  LoginExceptionField: {fileID: 1811557066}
+  NewUserFullNameField: {fileID: 1812329442}
+  NewUserEmailField: {fileID: 855519403}
+  NewUserNickNameField: {fileID: 1272960011}
+  NewUserPasswordField: {fileID: 250740201}
+  RegisterButton: {fileID: 849297757}
+  RegistrationExceptionField: {fileID: 757015960}
 --- !u!1 &563332895
 GameObject:
   m_ObjectHideFlags: 0
@@ -10709,19 +10719,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 849297758}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 547951223}
-        m_TargetAssemblyTypeName: UIController, Assembly-CSharp
-        m_MethodName: ShowClickerScreen
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &849297758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11338,7 +11336,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bfec94b6c30fe14fa2b640d5f37d5f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ExceptionLabel: {fileID: 0}
+  dependencyStatus: 0
 --- !u!1 &891091274
 GameObject:
   m_ObjectHideFlags: 0
@@ -26093,19 +26091,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2080425668}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 547951223}
-        m_TargetAssemblyTypeName: UIController, Assembly-CSharp
-        m_MethodName: ShowClickerScreen
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &2080425668
 MonoBehaviour:
   m_ObjectHideFlags: 0
