@@ -11,38 +11,51 @@ public class AuthManager : MonoBehaviour
     public DependencyStatus dependencyStatus;
     public FirebaseAuth firebaseAuth;
     public FirebaseUser firebaseUser;
+    public FirebaseApp app;
 
-    private void Awake()
+    public void Awake()
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => 
-        {
+        //UIController.instance.LoginButton.onClick.AddListener(TryLogin);
+        //UIController.instance.RegisterButton.onClick.AddListener(TryRegister);
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
             dependencyStatus = task.Result;
-            if (dependencyStatus == DependencyStatus.Available)
+            if (dependencyStatus == Firebase.DependencyStatus.Available)
             {
-                InitializeFirebase();
+                // Create and hold a reference to your FirebaseApp,
+                // where app is a Firebase.FirebaseApp property of your application class.
+                app = FirebaseApp.DefaultInstance;
+                firebaseAuth = FirebaseAuth.DefaultInstance;
+                // Set a flag here to indicate whether Firebase is ready to use by your app.
             }
-            else 
+            else
             {
-                ThrowLoginException($"Couldn't resolve all the depencies! status: {dependencyStatus.ToString()}");
-                ThrowRegistrationException($"Couldn't resolve all the depencies! status: {dependencyStatus.ToString()}");
+                ThrowInitializationException(string.Format("Could not resolve all Firebase dependencies: {0}", dependencyStatus));
+                // Firebase Unity SDK is not safe to use here.
             }
         });
     }
 
-    private void InitializeFirebase() 
+    public void ManualAuth() 
     {
-        Debug.Log("Initializing firebase auth...");
-        firebaseAuth = FirebaseAuth.DefaultInstance;
-        UIController.instance.LoginButton.onClick.AddListener(TryLogin);
-        UIController.instance.RegisterButton.onClick.AddListener(TryRegister);
+        Awake();
     }
 
-    private void TryLogin() 
+    public void TryLogin() 
     {
+        UIController.instance.ShowLoading(true);
+        StartCoroutine(Login(
+            UIController.instance.UserEmailField.text, 
+            UIController.instance.UserPasswordField.text));
     }
 
-    private void TryRegister() 
+    public void TryRegister() 
     {
+        UIController.instance.ShowLoading(true);
+        StartCoroutine(Register(
+            UIController.instance.NewUserEmailField.text, 
+            UIController.instance.NewUserPasswordField.text,
+            UIController.instance.NewUserNickNameField.text,
+            UIController.instance.NewUserFullNameField.text));
     }
 
     private IEnumerator Login(string _email, string _password) 
@@ -68,6 +81,65 @@ public class AuthManager : MonoBehaviour
         }
     }
 
+    private IEnumerator Register(string _email, string _password, string _username, string _fullname)
+    {
+        if (string.IsNullOrEmpty(_email) || string.IsNullOrEmpty(_password) || string.IsNullOrEmpty(_username) || string.IsNullOrEmpty(_fullname)) 
+        {
+            string error_message = "Following fields are missing: ";
+            if (string.IsNullOrEmpty(_email)) error_message += "Email, ";
+            if (string.IsNullOrEmpty(_password)) error_message += "Password, ";
+            if (string.IsNullOrEmpty(_username)) error_message += "User Name, ";
+            if (string.IsNullOrEmpty(_fullname)) error_message += "Full Name. ";
+            ThrowRegistrationException(error_message);
+            yield break;
+        }
+        var RegisterTask = firebaseAuth.CreateUserWithEmailAndPasswordAsync(_email, _password);
+        //Show loading screen
+        UIController.instance.ShowLoading(true);
+        yield return new WaitUntil(predicate: () => RegisterTask.IsCompleted);
+        UIController.instance.ShowLoading(false);
+
+
+        if (RegisterTask.Exception != null)
+        {
+            Debug.LogErrorFormat($"Registration failed with exception: {RegisterTask.Exception}");
+            FirebaseException ex = RegisterTask.Exception.GetBaseException() as FirebaseException;
+            AuthError errorCode = (AuthError)ex.ErrorCode;
+            ThrowRegistrationException($"Registration failed with exception: {errorCode.ToString()}");
+        }
+        else
+        {
+            firebaseUser = RegisterTask.Result;
+            if (firebaseUser != null)
+            {
+                Debug.Log($"User registered seccessfuly! with username: {firebaseUser.DisplayName}, and email: {firebaseUser.Email}");
+                UserProfile profile = new UserProfile { DisplayName = _username };// Can be used to update Avatar URL!
+                var ProfileUpdateTask = firebaseUser.UpdateUserProfileAsync(profile);
+                yield return new WaitUntil(predicate: () => RegisterTask.IsCompleted);
+
+                if (ProfileUpdateTask.Exception != null)
+                    Debug.Log($"Could not update user profile with exception: {ProfileUpdateTask.Exception.Message}");
+                else
+                {
+                    Debug.Log($"Profile display name updated successfully!");
+                    UIController.instance.UserEmailField.text = _email;
+                    UIController.instance.ShowLoginScreen();
+                }
+            }
+            else 
+            {
+                Debug.LogErrorFormat($"Registration failed with exception: {RegisterTask.Exception}");
+                FirebaseException ex = RegisterTask.Exception.GetBaseException() as FirebaseException;
+                AuthError errorCode = (AuthError)ex.ErrorCode;
+                ThrowRegistrationException($"Registration failed with exception: {errorCode.ToString()}");
+            }
+        }
+    }
+    private void ThrowInitializationException(string exception_message)
+    {
+        UIController.instance.InitializationExceptionField.gameObject.SetActive(true);
+        UIController.instance.InitializationExceptionField.text = exception_message;
+    }
     private void ThrowLoginException(string exception_message) 
     {
         UIController.instance.LoginExceptionField.gameObject.SetActive(true);
@@ -77,5 +149,11 @@ public class AuthManager : MonoBehaviour
     {
         UIController.instance.RegistrationExceptionField.gameObject.SetActive(true);
         UIController.instance.RegistrationExceptionField.text = exception_message;
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (firebaseUser != null) 
+            firebaseAuth.SignOut();
     }
 }

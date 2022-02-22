@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "562997679264",
+    "project_id": "clickmasterpublic",
+    "storage_bucket": "clickmasterpublic.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:562997679264:android:008c286852486dce5025c5",
+        "android_client_info": {
+          "package_name": "com.EclipseMobile.ClickMasterFirebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "562997679264-lr3flo2qpeir1ee1f87vm4jjngjhvfma.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYvZrS72lHACxb3NrmnxEvbl-PkwDDxk0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "562997679264-lr3flo2qpeir1ee1f87vm4jjngjhvfma.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

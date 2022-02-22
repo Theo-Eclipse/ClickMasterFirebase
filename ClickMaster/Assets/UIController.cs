@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 
 [RequireComponent(typeof(RectTransform), typeof(Canvas))]
-public class UIController : MonoBehaviour
+public class UIController : MonoBehaviour, IExecutionManager
 {
     public static UIController instance { get; private set; }
     [Header("Screens")]
@@ -15,8 +15,12 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject ClickerScreen;
     [SerializeField] private GameObject LoadingScreen;
 
+    [Header("Home Screen")]
+    public TextMeshProUGUI InitializationExceptionField;
+
+
     [Header("Login Form")]
-    public TMP_InputField UserNameField;
+    public TMP_InputField UserEmailField;
     public TMP_InputField UserPasswordField;
     public Button LoginButton;
     public TextMeshProUGUI LoginExceptionField;
@@ -29,9 +33,8 @@ public class UIController : MonoBehaviour
     public Button RegisterButton;
     public TextMeshProUGUI RegistrationExceptionField;
 
-    public 
     // Start is called before the first frame update
-    void Start()
+    public void Init()
     {
         instance = this;
         ShowWelcomeScreen();
@@ -68,7 +71,7 @@ public class UIController : MonoBehaviour
     public void ShowLoginScreen()
     {
         ClearLoginForm();
-        UserNameField.Select();// Select the first field.
+        UserEmailField.Select();// Select the first field.
         WelcomeScreen.SetActive(false);
         RegistrationScreen.SetActive(false);
         LoginScreen.SetActive(true);
@@ -98,7 +101,7 @@ public class UIController : MonoBehaviour
 
     private void ClearLoginForm()
     {
-        UserNameField.text = "";
+        UserEmailField.text = "";
         UserPasswordField.text = "";
         LoginExceptionField.gameObject.SetActive(false);
     }
