@@ -7,14 +7,19 @@ using TMPro;
 
 public class AuthManager : MonoBehaviour
 {
+    public static AuthManager instance { get; private set; }
     [Header("Firebase")]
     public DependencyStatus dependencyStatus;
     public FirebaseAuth firebaseAuth;
     public FirebaseUser firebaseUser;
     public FirebaseApp app;
 
+    [Header("Database")]
+    public DatabaseManager DBManager;
+
     public void Awake()
     {
+        instance = this;
         //UIController.instance.LoginButton.onClick.AddListener(TryLogin);
         //UIController.instance.RegisterButton.onClick.AddListener(TryRegister);
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
@@ -25,6 +30,7 @@ public class AuthManager : MonoBehaviour
                 // where app is a Firebase.FirebaseApp property of your application class.
                 app = FirebaseApp.DefaultInstance;
                 firebaseAuth = FirebaseAuth.DefaultInstance;
+                DBManager.DBRef = Firebase.Database.FirebaseDatabase.DefaultInstance.RootReference;
                 // Set a flag here to indicate whether Firebase is ready to use by your app.
             }
             else
