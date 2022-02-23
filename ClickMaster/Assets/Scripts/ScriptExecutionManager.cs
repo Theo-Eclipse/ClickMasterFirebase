@@ -4,14 +4,12 @@ using UnityEngine;
 
 public class ScriptExecutionManager : MonoBehaviour
 {
+    [SerializeField] private UIController uIController;
+    [SerializeField] private AuthManager authManager;
     void Start()
     {
-        // Used to manage script execution by their order in Hierarchy
-        Debug.Log($"Program starde. Initializing {transform.childCount} scripts.");
-        for (int i = 0; i < transform.childCount; i++) 
-        {
-            var script = transform.GetChild(i).GetComponent<IExecutionManager>();
-            if (script != null) script.Init();
-        }
+        // Used to manage script execution order from script.
+        uIController.Init();
+       // authManager.Init();
     }
 }

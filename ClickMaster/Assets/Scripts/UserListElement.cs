@@ -18,16 +18,17 @@ public class UserListElement : MonoBehaviour
     [SerializeField] private TextMeshProUGUI UserClicks_Label;
     private Color UColor;
 
-    public void SetData() 
+    public void Set(int Place) 
     {
-        UserName_Label.text = user.username;
-        UserAvatar.gameObject.SetActive(false);// 
+
+        UserName_Label.text = user.name;
+        UserAvatar.gameObject.SetActive(false);
         if (ColorUtility.TryParseHtmlString(user.user_color, out UColor))
             UserColor.color = UColor;
         UserClicks_Label.text = user.clicks_last_session.ToString();
     }
 
-    public void OverrideLeaderboardPlace(int place) => UserPlace_Label.text = $"{place}#";
+    public void SetLeaderboardPlace(int place) => UserPlace_Label.text = $"{place}#";
 
     public void OverrideShownName(string name) => UserName_Label.text = name;
 
