@@ -54,3 +54,7 @@
 *.rns filter=lfs diff=lfs merge=lfs -text
 *.reason filter=lfs diff=lfs merge=lfs -text
 *.lxo filter=lfs diff=lfs merge=lfs -text
+
+#FIREBASE
+*.so filter=lfs diff=lfs merge=lfs -text
+#*6395
