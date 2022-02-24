@@ -34,9 +34,7 @@ public class UIController : MonoBehaviour, IExecutionManager
 
     [Header("Leaderboard Screen")]
     public TextMeshProUGUI ButtonClickCounter;
-
-    [Header("Debug Status")]
-    public TextMeshProUGUI DebugStatusLabel;
+    public GameObject SignoutScreen;
 
     // Start is called before the first frame update
     public void Init()
@@ -118,13 +116,5 @@ public class UIController : MonoBehaviour, IExecutionManager
         UserPasswordField.text = PlayerPrefs.GetString("LAST_SAVED_PASS", "");
         KeepPasswordToggle.isOn = !string.IsNullOrEmpty(UserPasswordField.text);
         LoginExceptionField.gameObject.SetActive(false);
-    }
-
-
-    public static void SetStatus(string status)
-    {
-        Debug.Log(status);
-        instance.DebugStatusLabel.text = $"Status: {status}";
-    }
-    
+    }  
 }

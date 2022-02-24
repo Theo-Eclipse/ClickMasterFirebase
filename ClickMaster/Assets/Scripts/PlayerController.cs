@@ -35,4 +35,7 @@ public class PlayerController : MonoBehaviour, IExecutionManager
         UIController.instance.ButtonClickCounter.text = user.clicks_last_session.ToString();
         LeaderboardManager.instance.Sort();
     }
+
+    public void ClearPlayerInstance() => user = null;
+    
 }

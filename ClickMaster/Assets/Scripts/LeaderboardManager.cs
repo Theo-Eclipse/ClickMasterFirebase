@@ -24,16 +24,6 @@ public class LeaderboardManager : MonoBehaviour, IExecutionManager
 
     public static UserListElement GetLeaderboardElement(string user_id) => instance.UserID_ListElement[user_id];
 
-    private void UpdateUserClicks(string user_id, int clicks)
-    {
-        if (UserID_ListElement.ContainsKey(user_id)) 
-        {
-            UserID_ListElement[user_id].user.clicks_last_session = clicks;
-            UpdateUserListElement(user_id);
-            Sort();
-        }
-    }
-
     public void UpdateUserListElement(string user_id)
     {
         UserID_ListElement[user_id].SetData();
@@ -48,7 +38,7 @@ public class LeaderboardManager : MonoBehaviour, IExecutionManager
             CurrentPlayer_ListElement.SetData();
             UserID_ListElement.Add(user.user_id, CurrentPlayer_ListElement);
         }
-        else
+        else if(!UserID_ListElement.ContainsKey(user.user_id))
         {
             UserID_ListElement.Add(user.user_id, NewListElement(user));
         }
@@ -89,5 +79,14 @@ public class LeaderboardManager : MonoBehaviour, IExecutionManager
         CurrentPlayer_ListElement.OverrideShownName($"{CurrentPlayer_ListElement.user.username} <color=grey>(You)</color>");
     }
 
+    public void Clear() 
+    {
+        foreach (var element in UserID_ListElement)
+        {
+            if (element.Value != CurrentPlayer_ListElement)
+                Destroy(element.Value.gameObject);
+        }
+        UserID_ListElement.Clear();
+    }
     private void OnEnable() => Sort();
 }

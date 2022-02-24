@@ -17,7 +17,7 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
     public void Init()
     {
         instance = this;
-        UIController.SetStatus("Database Manager Initialization...");
+        Debug.Log("Database Manager Initialization...");
     }
 
     public IEnumerator LoadLeaderboardData()
@@ -28,14 +28,14 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
         if (DBTask.Exception != null)
         {
             Debug.LogErrorFormat($"Couldn't get leaderboard data!: {DBTask.Exception.Message}");
-            UIController.SetStatus($"Couldn't get leaderboard data!: {DBTask.Exception.Message}");
+            Debug.Log($"Couldn't get leaderboard data!: {DBTask.Exception.Message}");
         }
         else
         {
             DataSnapshot snapshot = DBTask.Result;
             foreach (DataSnapshot childsnapshot in snapshot.Children) 
             {
-                UIController.SetStatus($"Loaded Leaderboard Entery: {childsnapshot.Key.ToString()}");
+                Debug.Log($"Loaded Leaderboard Entery: {childsnapshot.Key.ToString()}");
                 string user_id = childsnapshot.Key.ToString();
                 UpdateDataFromSnapshot(user_id, childsnapshot);
             }
@@ -49,10 +49,7 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
             if (LeaderboardManager.UserExists(user_id))
                 UpdateLeaderboardUserFromSnapshot(user_id, snapshot);
             else
-            {
                 CreateLeaderboardUserFromSnapshot(user_id, snapshot);
-                DatabaseListener.instance.AddListener(user_id);
-            }
         }
     }
 
@@ -92,7 +89,7 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
 
     private bool SnapshotHasData(DataSnapshot snapshot) 
     {
-        UIController.SetStatus($"Snapshot user_id: {snapshot.Key.ToString()}, Has username: {snapshot.HasChild("username")}, Has fullname: {snapshot.HasChild("fullname")}, Has email: {snapshot.HasChild("email")}, Has user_color: {snapshot.HasChild("user_color")}, Has clicks: {snapshot.HasChild("clicks_last_session")}");
+        Debug.Log($"Snapshot user_id: {snapshot.Key.ToString()}, Has username: {snapshot.HasChild("username")}, Has fullname: {snapshot.HasChild("fullname")}, Has email: {snapshot.HasChild("email")}, Has user_color: {snapshot.HasChild("user_color")}, Has clicks: {snapshot.HasChild("clicks_last_session")}");
         return snapshot.HasChild("username") && snapshot.HasChild("fullname") && snapshot.HasChild("email") && snapshot.HasChild("user_color") && snapshot.HasChild("clicks_last_session");
     }
 
@@ -101,8 +98,8 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
         UIController.instance.ShowLoading(true);
         var DBTask = DBRef.Child("users").Child(user_id).GetValueAsync();
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
-        if (DBTask.Exception != null) 
-            UIController.SetStatus($"Check user exists failed!: {DBTask.Exception.Message}");   
+        if (DBTask.Exception != null)
+            Debug.Log($"Check user exists failed!: {DBTask.Exception.Message}");   
         else 
         {
             DataSnapshot snapshot = DBTask.Result;
@@ -140,8 +137,8 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
         var DBTask = DBRef.Child("users").Child(user.user_id).SetRawJsonValueAsync(JsonUtility.ToJson(json));
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
         if (DBTask.Exception != null)
-            UIController.SetStatus($"Couldn't update user CLICKS AMOUNT!: {DBTask.Exception.Message}");      
-        else UIController.SetStatus($"User {user.username}({user.user_id}) database, updates successfuly!");
+            Debug.Log($"Couldn't update user CLICKS AMOUNT!: {DBTask.Exception.Message}");      
+        else Debug.Log($"User {user.username}({user.user_id}) database, updates successfuly!");
         onCompleted.Invoke();
     }
     public IEnumerator PushClicksUpdate()
@@ -150,11 +147,8 @@ public class DatabaseManager : MonoBehaviour, IExecutionManager
         var DBTask = DBRef.Child("users").Child(user.user_id).Child("clicks_last_session").SetValueAsync(user.clicks_last_session);
         yield return new WaitUntil(predicate: () => DBTask.IsCompleted);
         if (DBTask.Exception != null)
-        {
-            Debug.LogErrorFormat($"Couldn't update user clicks amount!: {DBTask.Exception.Message}");
-            UIController.SetStatus($"Couldn't update user clicks amount!: {DBTask.Exception.Message}");
-        }
-        else UIController.SetStatus($"User {user.username}({user.user_id}) clicks amount updates successfuly!");
+            Debug.LogErrorFormat($"Couldn't update user clicks amount!: {DBTask.Exception.Message}");      
+        else Debug.Log($"User {user.username}({user.user_id}) clicks amount updates successfuly!");
     }
 
     public void StartDatabaseListeners() 

@@ -34,19 +34,20 @@ public class AuthManager : MonoBehaviour, IExecutionManager
 
     private void OnLoginSuccess() 
     {
-        PlayerPrefs.SetInt("FirstLogin", 0);// 0 - False(When it's not a first time you've logged in);
-        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", firebaseUser.Email);// Remeber last login
-        if (UIController.instance.KeepPasswordToggle.isOn)
-            PlayerPrefs.SetString("LAST_SAVED_PASS", UIController.instance.UserPasswordField.text);// Remeber last login
         UIController.instance.ShowClickerScreen();
         PlayerController.instance.SetCurrentUserInstance(firebaseUser.UserId);
         StartCoroutine(DatabaseManager.instance.LoadLeaderboardData());
         ClicksDataPusher.instance.SetEnable(true);
+        DatabaseListener.EnableListener(true);
         UIController.instance.ShowLoading(false);
     }
 
     public void TryLogin() 
     {
+        PlayerPrefs.SetInt("FirstLogin", 0);// 0 - False(When it's not a first time you've logged in);
+        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", UIController.instance.UserEmailField.text);// Remeber last login
+        if (UIController.instance.KeepPasswordToggle.isOn)
+            PlayerPrefs.SetString("LAST_SAVED_PASS", UIController.instance.UserPasswordField.text);// Remeber last login
         UIController.instance.ShowLoading(true);
         StartCoroutine(Login(
             UIController.instance.UserEmailField.text, 
@@ -143,6 +144,7 @@ public class AuthManager : MonoBehaviour, IExecutionManager
                     //
                     // Automatic login.
                     //
+                    PlayerPrefs.SetString("LAST_SAVED_PASS", _password);// Remeber last login
                     var LoginTask = firebaseAuth.SignInWithEmailAndPasswordAsync(_email, _password);
                     yield return new WaitUntil(predicate: () => LoginTask.IsCompleted);
                     // Automatic login failed.
@@ -191,10 +193,15 @@ public class AuthManager : MonoBehaviour, IExecutionManager
         UIController.instance.RegistrationExceptionField.text = exception_message;
     }
 
-    private void OnApplicationQuit()
+    private void OnApplicationQuit() => SignOut();  
+
+    public void SignOut() 
     {
+        DatabaseListener.EnableListener(true);
         ClicksDataPusher.instance.SetEnable(false);
-        if (firebaseUser != null) 
+        LeaderboardManager.instance.Clear();
+        PlayerController.instance.ClearPlayerInstance();
+        if (firebaseUser != null)
             firebaseAuth.SignOut();
     }
 }

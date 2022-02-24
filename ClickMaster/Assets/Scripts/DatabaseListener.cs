@@ -16,39 +16,24 @@ public class DatabaseListener : MonoBehaviour, IExecutionManager
         DatabaseReference = DatabaseManager.instance.DBRef;
     }
 
-    public void AddListener(string user_id) 
+    public static void EnableListener(bool enable) 
     {
-        FirebaseDatabase.DefaultInstance.GetReference("users").Child(user_id).ValueChanged += HandleValueChanged;
+        if (enable)
+            FirebaseDatabase.DefaultInstance.GetReference("users").ChildChanged += HandleChildChange;
+        else FirebaseDatabase.DefaultInstance.GetReference("users").ChildChanged -= HandleChildChange;
     }
 
-    public static void AddGlobalListener() 
+    private static void HandleChildChange(object sender, ChildChangedEventArgs e)
     {
-        FirebaseDatabase.DefaultInstance.GetReference("users").LimitToFirst(1).ValueChanged += instance.HandleUserChanged;
-    }
-    
-    private void HandleValueChanged(object sender, ValueChangedEventArgs args)
-    {
-        if (args.DatabaseError != null)
+        if (e.DatabaseError != null)
         {
-            Debug.LogErrorFormat(args.DatabaseError.Message);
+            Debug.LogErrorFormat(e.DatabaseError.Message);
             return;
         }
         // Do something with the data in args.Snapshot
-        string user_id = args.Snapshot.Key.ToString();
-        if (args.Snapshot.ChildrenCount > 0 && user_id != AuthManager.instance.firebaseUser.UserId)
-            DatabaseManager.instance.UpdateDataFromSnapshot(user_id, args.Snapshot);
-        Debug.Log($"user change: {args.Snapshot.ChildrenCount}, args key: {args.Snapshot.Key}");
-    }
-
-    private void HandleUserChanged(object sender, ValueChangedEventArgs args)
-    {
-        if (args.DatabaseError != null)
-        {
-            Debug.LogErrorFormat(args.DatabaseError.Message);
-            return;
-        }
-        // Do something with the data in args.Snapshot
-        string user_id = args.Snapshot.Key.ToString();
-        Debug.Log($"user change: {args.Snapshot.ChildrenCount}, args key: {args.Snapshot.Key}");
+        string user_id = e.Snapshot.Key.ToString();
+        if (e.Snapshot.ChildrenCount > 0 && user_id != AuthManager.instance.firebaseUser.UserId)
+            DatabaseManager.instance.UpdateDataFromSnapshot(user_id, e.Snapshot);
+        Debug.Log($"user changed: {user_id}, snapshot children: {e.Snapshot.ChildrenCount}, snapshot data: {e.Snapshot.Value.ToString()}");
     }
 }
