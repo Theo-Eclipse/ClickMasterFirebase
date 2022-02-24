@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-[RequireComponent(typeof(RectTransform), typeof(Canvas))]
 public class UIController : MonoBehaviour, IExecutionManager
 {
     public static UIController instance { get; private set; }
@@ -17,7 +16,6 @@ public class UIController : MonoBehaviour, IExecutionManager
 
     [Header("Home Screen")]
     public TextMeshProUGUI InitializationExceptionField;
-
 
     [Header("Login Form")]
     public TMP_InputField UserEmailField;
@@ -33,10 +31,17 @@ public class UIController : MonoBehaviour, IExecutionManager
     public Button RegisterButton;
     public TextMeshProUGUI RegistrationExceptionField;
 
+    [Header("Leaderboard Screen")]
+    public TextMeshProUGUI ButtonClickCounter;
+
+    [Header("Debug Status")]
+    public TextMeshProUGUI DebugStatusLabel;
+
     // Start is called before the first frame update
     public void Init()
     {
         instance = this;
+        Debug.Log("UI Controller Initialization...");
         ShowWelcomeScreen();
     }
 
@@ -101,9 +106,16 @@ public class UIController : MonoBehaviour, IExecutionManager
 
     private void ClearLoginForm()
     {
-        UserEmailField.text = "";
+        UserEmailField.text = PlayerPrefs.GetString("LAST_LOGIN_EMAIL", "");
         UserPasswordField.text = "";
         LoginExceptionField.gameObject.SetActive(false);
     }
 
+
+    public static void SetStatus(string status)
+    {
+        Debug.Log(status);
+        instance.DebugStatusLabel.text = $"Status: {status}";
+    }
+    
 }

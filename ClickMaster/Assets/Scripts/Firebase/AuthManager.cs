@@ -4,8 +4,9 @@ using UnityEngine;
 using Firebase;
 using Firebase.Auth;
 using TMPro;
+using UnityEngine.Events;
 
-public class AuthManager : MonoBehaviour
+public class AuthManager : MonoBehaviour, IExecutionManager
 {
     public static AuthManager instance { get; private set; }
     [Header("Firebase")]
@@ -14,36 +15,30 @@ public class AuthManager : MonoBehaviour
     public FirebaseUser firebaseUser;
     public FirebaseApp app;
 
-    [Header("Database")]
-    public DatabaseManager DBManager;
-
-    public void Awake()
+    public void Init()
     {
         instance = this;
-        //UIController.instance.LoginButton.onClick.AddListener(TryLogin);
-        //UIController.instance.RegisterButton.onClick.AddListener(TryRegister);
+        Debug.Log("Auth Manager Initialization...");
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
             dependencyStatus = task.Result;
             if (dependencyStatus == Firebase.DependencyStatus.Available)
             {
-                // Create and hold a reference to your FirebaseApp,
-                // where app is a Firebase.FirebaseApp property of your application class.
                 app = FirebaseApp.DefaultInstance;
                 firebaseAuth = FirebaseAuth.DefaultInstance;
-                DBManager.DBRef = Firebase.Database.FirebaseDatabase.DefaultInstance.RootReference;
-                // Set a flag here to indicate whether Firebase is ready to use by your app.
             }
             else
-            {
                 ThrowInitializationException(string.Format("Could not resolve all Firebase dependencies: {0}", dependencyStatus));
-                // Firebase Unity SDK is not safe to use here.
-            }
+            
         });
     }
 
-    public void ManualAuth() 
+    private void OnLoginSuccess() 
     {
-        Awake();
+        UIController.instance.ShowClickerScreen();
+        PlayerController.instance.SetCurrentUserInstance(firebaseUser.UserId);
+        StartCoroutine(DatabaseManager.instance.LoadLeaderboardData());
+        ClicksDataPusher.instance.SetEnable(true);
+        UIController.instance.ShowLoading(false);
     }
 
     public void TryLogin() 
@@ -51,7 +46,7 @@ public class AuthManager : MonoBehaviour
         UIController.instance.ShowLoading(true);
         StartCoroutine(Login(
             UIController.instance.UserEmailField.text, 
-            UIController.instance.UserPasswordField.text));
+            UIController.instance.UserPasswordField.text, OnLoginSuccess));
     }
 
     public void TryRegister() 
@@ -64,8 +59,17 @@ public class AuthManager : MonoBehaviour
             UIController.instance.NewUserFullNameField.text));
     }
 
-    private IEnumerator Login(string _email, string _password) 
+    private IEnumerator Login(string _email, string _password, UnityAction onSuccess) 
     {
+        if (string.IsNullOrEmpty(_email) || string.IsNullOrEmpty(_password))
+        {
+            string error_message = "Following fields are missing: ";
+            if (string.IsNullOrEmpty(_email)) error_message += "Email, ";
+            if (string.IsNullOrEmpty(_password)) error_message += "Password.";
+            ThrowLoginException(error_message);
+            yield break;
+        }
+        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", _email);// Remeber last login
         var LoginTask = firebaseAuth.SignInWithEmailAndPasswordAsync(_email, _password);
 
         //Show loading screen
@@ -83,7 +87,9 @@ public class AuthManager : MonoBehaviour
         {
             firebaseUser = LoginTask.Result;
             Debug.Log($"User logged in seccessfuly! as username: {firebaseUser.DisplayName}, with email: {firebaseUser.Email}");
-            UIController.instance.ShowClickerScreen();
+            // Create database referance after successful login 
+            DatabaseManager.instance.DBRef = Firebase.Database.FirebaseDatabase.DefaultInstance.RootReference;
+            StartCoroutine(DatabaseManager.instance.CheckUserDataExists(firebaseUser.UserId, onSuccess));
         }
     }
 
@@ -99,37 +105,61 @@ public class AuthManager : MonoBehaviour
             ThrowRegistrationException(error_message);
             yield break;
         }
+        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", _email);// Remeber last login
+        //
+        // Registration Start
+        //
         var RegisterTask = firebaseAuth.CreateUserWithEmailAndPasswordAsync(_email, _password);
-        //Show loading screen
         UIController.instance.ShowLoading(true);
         yield return new WaitUntil(predicate: () => RegisterTask.IsCompleted);
-        UIController.instance.ShowLoading(false);
-
-
-        if (RegisterTask.Exception != null)
+        if (RegisterTask.Exception != null)// Registration failed
         {
             Debug.LogErrorFormat($"Registration failed with exception: {RegisterTask.Exception}");
             FirebaseException ex = RegisterTask.Exception.GetBaseException() as FirebaseException;
             AuthError errorCode = (AuthError)ex.ErrorCode;
             ThrowRegistrationException($"Registration failed with exception: {errorCode.ToString()}");
+            UIController.instance.ShowLoading(false);
         }
-        else
+        else// Registration success
         {
             firebaseUser = RegisterTask.Result;
             if (firebaseUser != null)
             {
                 Debug.Log($"User registered seccessfuly! with username: {firebaseUser.DisplayName}, and email: {firebaseUser.Email}");
-                UserProfile profile = new UserProfile { DisplayName = _username };// Can be used to update Avatar URL!
-                var ProfileUpdateTask = firebaseUser.UpdateUserProfileAsync(profile);
+                UserProfile profile = new UserProfile { DisplayName = _username };
+                var ProfileUpdateTask = firebaseUser.UpdateUserProfileAsync(profile);// updating display name
                 yield return new WaitUntil(predicate: () => RegisterTask.IsCompleted);
 
-                if (ProfileUpdateTask.Exception != null)
+                if (ProfileUpdateTask.Exception != null)// Could'nt update display name
+                {
                     Debug.Log($"Could not update user profile with exception: {ProfileUpdateTask.Exception.Message}");
+                    UIController.instance.ShowLoading(false);
+                }
                 else
                 {
-                    Debug.Log($"Profile display name updated successfully!");
-                    UIController.instance.UserEmailField.text = _email;
-                    UIController.instance.ShowLoginScreen();
+                    Debug.Log($"Registration completed successfully! now you'll log in");
+                    //
+                    // Automatic login.
+                    //
+                    var LoginTask = firebaseAuth.SignInWithEmailAndPasswordAsync(_email, _password);
+                    yield return new WaitUntil(predicate: () => LoginTask.IsCompleted);
+                    // Automatic login failed.
+                    if (LoginTask.Exception != null)
+                    {
+                        Debug.LogErrorFormat($"Failed to login, with exception: {LoginTask.Exception}");
+                        FirebaseException ex = LoginTask.Exception.GetBaseException() as FirebaseException;
+                        AuthError errorCode = (AuthError)ex.ErrorCode;
+                        ThrowLoginException($"Failed to login, with exception: {errorCode}");
+                        UIController.instance.ShowLoading(false);
+                    }
+                    else//Automatic login success.
+                    {
+                        firebaseUser = LoginTask.Result;
+                        // Create database referance after successful login 
+                        DatabaseManager.instance.DBRef = Firebase.Database.FirebaseDatabase.DefaultInstance.RootReference;
+                        Debug.Log($"User logged in seccessfuly! as username: {firebaseUser.DisplayName}, with email: {firebaseUser.Email}");
+                        DatabaseManager.instance.CreateLeaderboardAndUserdata(firebaseUser.UserId, _fullname, OnLoginSuccess);
+                    }
                 }
             }
             else 
@@ -137,10 +167,12 @@ public class AuthManager : MonoBehaviour
                 Debug.LogErrorFormat($"Registration failed with exception: {RegisterTask.Exception}");
                 FirebaseException ex = RegisterTask.Exception.GetBaseException() as FirebaseException;
                 AuthError errorCode = (AuthError)ex.ErrorCode;
-                ThrowRegistrationException($"Registration failed with exception: {errorCode.ToString()}");
+                ThrowRegistrationException($"Registration failed with exception: {errorCode}");
+                UIController.instance.ShowLoading(false);
             }
         }
     }
+
     private void ThrowInitializationException(string exception_message)
     {
         UIController.instance.InitializationExceptionField.gameObject.SetActive(true);
@@ -159,6 +191,7 @@ public class AuthManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        ClicksDataPusher.instance.SetEnable(false);
         if (firebaseUser != null) 
             firebaseAuth.SignOut();
     }
