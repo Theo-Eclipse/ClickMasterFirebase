@@ -34,6 +34,10 @@ public class AuthManager : MonoBehaviour, IExecutionManager
 
     private void OnLoginSuccess() 
     {
+        PlayerPrefs.SetInt("FirstLogin", 0);// 0 - False(When it's not a first time you've logged in);
+        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", firebaseUser.Email);// Remeber last login
+        if (UIController.instance.KeepPasswordToggle.isOn)
+            PlayerPrefs.SetString("LAST_SAVED_PASS", UIController.instance.UserPasswordField.text);// Remeber last login
         UIController.instance.ShowClickerScreen();
         PlayerController.instance.SetCurrentUserInstance(firebaseUser.UserId);
         StartCoroutine(DatabaseManager.instance.LoadLeaderboardData());
@@ -69,7 +73,6 @@ public class AuthManager : MonoBehaviour, IExecutionManager
             ThrowLoginException(error_message);
             yield break;
         }
-        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", _email);// Remeber last login
         var LoginTask = firebaseAuth.SignInWithEmailAndPasswordAsync(_email, _password);
 
         //Show loading screen
@@ -105,7 +108,6 @@ public class AuthManager : MonoBehaviour, IExecutionManager
             ThrowRegistrationException(error_message);
             yield break;
         }
-        PlayerPrefs.SetString("LAST_LOGIN_EMAIL", _email);// Remeber last login
         //
         // Registration Start
         //

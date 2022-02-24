@@ -16,7 +16,6 @@ public class DatabaseListener : MonoBehaviour, IExecutionManager
         DatabaseReference = DatabaseManager.instance.DBRef;
     }
 
-
     public void AddListener(string user_id) 
     {
         FirebaseDatabase.DefaultInstance.GetReference("users").Child(user_id).ValueChanged += HandleValueChanged;

@@ -22,6 +22,7 @@ public class UIController : MonoBehaviour, IExecutionManager
     public TMP_InputField UserPasswordField;
     public Button LoginButton;
     public TextMeshProUGUI LoginExceptionField;
+    public Toggle KeepPasswordToggle;
 
     [Header("Register Form")]
     public TMP_InputField NewUserFullNameField;
@@ -42,7 +43,9 @@ public class UIController : MonoBehaviour, IExecutionManager
     {
         instance = this;
         Debug.Log("UI Controller Initialization...");
-        ShowWelcomeScreen();
+        if (PlayerPrefs.GetInt("FirstLogin", 1) == 1)
+            ShowWelcomeScreen();
+        else ShowLoginScreen();
     }
 
     // Update is called once per frame
@@ -95,6 +98,11 @@ public class UIController : MonoBehaviour, IExecutionManager
 
     public void ShowLoading(bool loading) => LoadingScreen.SetActive(loading);
 
+    public void KeepPassword(bool keep) 
+    {
+        PlayerPrefs.SetString("LAST_SAVED_PASS", keep ? UserPasswordField.text : "");
+    }
+
     private void ClearRegistrationForm() 
     {
         NewUserFullNameField.text = "";
@@ -107,7 +115,8 @@ public class UIController : MonoBehaviour, IExecutionManager
     private void ClearLoginForm()
     {
         UserEmailField.text = PlayerPrefs.GetString("LAST_LOGIN_EMAIL", "");
-        UserPasswordField.text = "";
+        UserPasswordField.text = PlayerPrefs.GetString("LAST_SAVED_PASS", "");
+        KeepPasswordToggle.isOn = !string.IsNullOrEmpty(UserPasswordField.text);
         LoginExceptionField.gameObject.SetActive(false);
     }
 
